@@ -1,17 +1,49 @@
 ---
-title: "Project Step 1"
-author: "Mark and Cosmo"
+title: "STA279: Data Analysis Report #2"
+author: "Sihang Zhao, Haoxuan Sun"
 date: "2026-02-19"
-output: html_document
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE}
-library(readr)
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message= FALSE, fig.asp = .6)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.asp =.5)
 ```
+
 
 ```{r}
 mydata<-read.csv("/Users/marksunhaoxuan/Downloads/NBA Player Salaries.csv")
 head(mydata)
 glimpse(mydata)
 ```
+
+\newpage
+# EXECUTIVE SUMMARY AND CONCLUSION
+
+
+\newpage
+# AI STATEMENT
+No generative AI tools were used in the process of conducting the analysis, performing the statistical modeling, or writing the substantive content of this report. All data analysis, coding, interpretation, and written explanations were completed independently by me, Sihang Zhao, as the sole author of this work. The only digital tool used during the writing process was Grammarly, and it was used exclusively for minor grammar and spelling corrections.
+
+
+\newpage
+# Project Title: Linguistic Traits and Authorship Prediction in Political Speeches of the United States
+# INTRODUCTION
+
+
+# ANALYSIS PROCEDURES
+
+
+\newpage
+\vspace*{\fill}
+\begin{center}
+\textbf{RESULTS ARE SHOWN BELOW}
+\end{center}
+\vspace*{\fill}
+
+
+\newpage
+# Section 1: EDA
