@@ -15,9 +15,18 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.asp =.
 
 
 ```{r}
-mydata<-read.csv("/Users/marksunhaoxuan/Downloads/NBA Player Salaries.csv")
-head(mydata)
-glimpse(mydata)
+library(ggplot2)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(nnet)
+library(dplyr)
+library(MASS)
+library(tidyr)
+library(naivebayes)
+library(corrplot)
+library(caret)
+mydata<-read.csv("/Users/cosmozhao/Desktop/NBA Player Salaries (2022-23 Season) export 2026-02-09 18-59-01.csv")
 ```
 
 \newpage
