@@ -10,7 +10,7 @@ geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.asp =.5)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message= FALSE, fig.asp = .6)
 ```
 
 
@@ -26,7 +26,12 @@ library(tidyr)
 library(naivebayes)
 library(corrplot)
 library(caret)
-mydata<-read.csv("/Users/cosmozhao/Desktop/NBA Player Salaries (2022-23 Season) export 2026-02-09 18-59-01.csv")
+library(knitr)
+library(kableExtra)
+
+mydata<-read.csv('/Users/cosmozhao/Desktop/NBA Player Salaries (2022-23 Season).csv')
+
+
 ```
 
 \newpage
@@ -39,7 +44,7 @@ No generative AI tools were used in the process of conducting the analysis, perf
 
 
 \newpage
-# Project Title: Linguistic Traits and Authorship Prediction in Political Speeches of the United States
+# Project Title: 
 # INTRODUCTION
 
 
@@ -55,4 +60,123 @@ No generative AI tools were used in the process of conducting the analysis, perf
 
 
 \newpage
-# Section 1: EDA
+# Section 1: Data and Goal Overview
+
+For this analysis, we use a dataset containing NBA player statistics and salaries from the 2022–2023 season. The dataset consists of (467) observations and (52) variables, where each observation represents an individual NBA player. The response variable is player salary, measured in U.S. dollars. While the dataset includes categorical variables such as player name, team, and position, these variables are excluded from the modeling process. Only quantitative performance statistics are used as predictors.
+
+The goal of this project is to predict a player’s salary based solely on measurable on-court performance metrics. By focusing on numerical variables, we aim to assess the extent to which statistical productivity explains differences in player compensation.
+
+The primary features considered include age, games played (GP), games started (GS), minutes per game (MP), field goals (FG), field goal percentage (FG%), three-point statistics, rebounds, assists, steals, blocks, turnovers, points per game, and other continuous box score or advanced metrics available in the dataset. These variables capture scoring efficiency, playing time, and overall player contribution.
+
+This project is particularly interesting because salary determination in professional sports reflects performance valuation within a competitive market. By modeling salary as a function of quantitative performance indicators, we can evaluate how strongly observable productivity translates into financial compensation.
+
+
+
+# Section 2: EDA
+
+## Raw Data Glimpse
+```{r}
+# build d inside this chunk (so knitting always has it)
+d <- mydata %>%
+  dplyr::select(-X) %>%                             # remove X if it exists
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 2))) %>%
+  head(6)
+
+key <- c("Player.Name", "Salary")   # keep these visible in both tables
+p <- 10                              # columns per table (adjust)
+
+# split columns into blocks of size p
+col_blocks <- split(names(d), ceiling(seq_along(names(d)) / p))
+
+# Part A
+d %>%
+  dplyr::select(any_of(key), all_of(setdiff(col_blocks[[1]], key))) %>%
+  kable(booktabs = TRUE, caption = "Raw data preview (Part A)") %>%
+  kable_styling(latex_options = "scale_down")
+
+# Part B (only if exists)
+if (length(col_blocks) > 1) {
+  d %>%
+    dplyr::select(any_of(key), all_of(setdiff(col_blocks[[2]], key))) %>%
+    kable(booktabs = TRUE, caption = "Raw data preview (Continued)") %>%
+    kable_styling(latex_options = "scale_down")
+}
+```
+
+## Check for multicollinearity among features
+
+# Attention about title and caption
+
+```{r,fig.asp = 1}
+# Select numeric variables only
+num_data <- mydata %>%
+  dplyr::select(where(is.numeric)) %>%
+  dplyr::select(-any_of("X"))   # remove index column if present
+
+# Compute correlation matrix
+cor_mat <- cor(num_data, use = "complete.obs")
+
+# Plot correlogram
+corrplot(cor_mat,
+         method = "circle",
+         type = "upper",
+         order = "hclust",
+         tl.col = "black",
+         tl.cex = 0.6)
+
+```
+
+blahblahblahblahblahblah
+
+
+## The Data 
+```{r}
+mydata_clean <- mydata %>%
+  dplyr::select(
+    Salary,
+    Age,
+    MP,       # choose this instead of PTS
+    AST.,
+    TRB,
+    BPM,
+    TOV.
+  )
+
+knitr::kable(mydata_clean[1:10,], caption = "The First 10 Rows of Our Data")
+```
+
+these are features we are gonna use, blahblahblah
+
+
+```{r}
+glossary <- data.frame(
+  Acronym = c("Salary", "Age", "MP", "AST", "TRB", "BPM", "TOV"),
+  Explanation = c(
+    "Annual player salary (USD)",
+    "Player age (years)",
+    "Minutes played per game",
+    "Assists per game",
+    "Total rebounds per game",
+    "Box Plus/Minus — overall impact metric",
+    "Turnovers per game"
+  )
+)
+
+kable(glossary,
+      booktabs = TRUE,
+      col.names = c("Acronym", "Explanation"),
+      caption = "Table: Variable Definitions") %>%
+  kable_styling(latex_options = "hold_position")
+```
+
+## Data Exploration
+
+
+
+
+\newpage
+# Appendix A: The Data
+
+```{r}
+knitr::kable(mydata_clean, title = "The Original Data")
+```
