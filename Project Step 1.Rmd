@@ -40,11 +40,12 @@ mydata<-read.csv('/Users/cosmozhao/Desktop/NBA Player Salaries (2022-23 Season).
 
 \newpage
 # AI STATEMENT
-No generative AI tools were used in the process of conducting the analysis, performing the statistical modeling, or writing the substantive content of this report. All data analysis, coding, interpretation, and written explanations were completed independently by me, Sihang Zhao, as the sole author of this work. The only digital tool used during the writing process was Grammarly, and it was used exclusively for minor grammar and spelling corrections.
+No generative AI tools were used in the process of conducting the analysis, performing the statistical modeling, or writing the substantive content of this report. All data analysis, coding, interpretation, and written explanations were completed by the equal contributions of Sihang Zhao & Haoxuan Sun, the joint authors of this work. The only digital tool used during the writing process was Grammarly, and it was used exclusively for minor grammar and spelling corrections.
 
 
 \newpage
-# Project Title: 
+# Project Title:
+
 # INTRODUCTION
 
 
@@ -62,7 +63,7 @@ No generative AI tools were used in the process of conducting the analysis, perf
 \newpage
 # Section 1: Data and Goal Overview
 
-For this analysis, we use a dataset containing NBA player statistics and salaries from the 2022–2023 season. The dataset consists of (467) observations and (52) variables, where each observation represents an individual NBA player. The response variable is player salary, measured in U.S. dollars. While the dataset includes categorical variables such as player name, team, and position, these variables are excluded from the modeling process. Only quantitative performance statistics are used as predictors.
+For this analysis, we use a dataset containing NBA player statistics and salaries from the 2022–2023 season. The dataset consists of (467) observations and (52) variables, where each observation represents an individual NBA player's statistics. The response variable is player salary, measured in U.S. dollars. While the dataset includes categorical variables such as player name, team, and position, these variables are excluded from the modeling process. Only quantitative performance statistics are used as predictors.
 
 The goal of this project is to predict a player’s salary based solely on measurable on-court performance metrics. By focusing on numerical variables, we aim to assess the extent to which statistical productivity explains differences in player compensation.
 
@@ -103,9 +104,11 @@ if (length(col_blocks) > 1) {
 }
 ```
 
-## Check for multicollinearity among features
+As shown in Table 1 & 2 above, our raw data includes in total of (22) columns, featuring (1) response variable (Y: Salary in US Dollar), and (21) features (3 categorical and 18 numerical). However, there are some issues within our feature set, particularly potential multicollinearity among the predictors. Therefore, we are going to conduct a multicollinearity check across all features and remove those with strong correlations with each other.
 
-# Attention about title and caption
+Additionally, ‘Player Name’, ‘Position’, and ‘Team’ are not useful categorical variables for predicting salary and may introduce unnecessary noise into the model. Therefore, we will also remove them during our data cleaning process.
+
+## Check for multicollinearity among features
 
 ```{r,fig.asp = 1}
 # Select numeric variables only
@@ -126,10 +129,12 @@ corrplot(cor_mat,
 
 ```
 
-blahblahblahblahblahblah
+As shown in the correlogram above, many features exhibit strong correlations with one another. For example, Field Goals Made is highly correlated with Points, and Minutes Played is strongly correlated with both Field Goals Made and Points. Three-Point Attempts also shows a strong correlation with Three-Point Field Goals Made. In addition, Total Rebounds is closely related to Blocks, and Free Throws Made is strongly associated with Free Throw Attempts.
 
+Such high correlations across predictors may lead to multicollinearity, which can inflate variance, destabilize coefficient estimates, and reduce model interpretability. Therefore, we are going to remove features that show strong correlations with each other in order to reduce redundancy and improve model stability.
 
 ## The Data 
+
 ```{r}
 mydata_clean <- mydata %>%
   dplyr::select(
@@ -145,8 +150,11 @@ mydata_clean <- mydata %>%
 knitr::kable(mydata_clean[1:10,], caption = "The First 10 Rows of Our Data")
 ```
 
-these are features we are gonna use, blahblahblah
+After data processing, we selected (6) features that most strongly affect our prediction while showing no strong correlation with each other, and created the final dataset used in this report. As shown above in Table 3, we present the first (10) rows of our cleaned dataset.
 
+To help our client better understand the acronyms used in the dataset, Table 4 provides the full names and definitions of each variable included in the model.
+
+For the complete dataset used in this analysis, please refer to [Appendix A](#appendix-a) at the end of this report.
 
 ```{r}
 glossary <- data.frame(
@@ -165,18 +173,163 @@ glossary <- data.frame(
 kable(glossary,
       booktabs = TRUE,
       col.names = c("Acronym", "Explanation"),
-      caption = "Table: Variable Definitions") %>%
+      caption = "Variable Definitions") %>%
   kable_styling(latex_options = "hold_position")
 ```
 
 ## Data Exploration
 
+### Research Question: How does the players' salary change over MP (Minutes played Per game)?
 
+```{r}
+ggplot(mydata_clean, aes(x = MP, y = Salary)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = TRUE, color = "navy") +
+  labs(x = "Minutes played Per game (MP)", 
+       y = "Salary ($)", 
+       title = "Figure 1",
+       caption = "The relationship between minutes played per game and salary")
+```
 
+As shown in Figure 1 above, although there is a clear positive relationship between Minutes Played per game and Salary, the pattern does not appear strictly linear. The spread of the data increases as Minutes Played increases, indicating potential heteroskedasticity, and the relationship appears slightly curved rather than perfectly linear. This suggests that a linear model on the raw Salary variable may not be the most appropriate specification.
+
+Therefore, it seems that applying a logarithmic transformation to Salary may provide a better fit. By modeling log(Salary) instead of Salary, we can stabilize the variance, reduce skewness in the response variable, and potentially achieve a more linear relationship between Minutes Played and Salary. Consequently, we will repeat the same analysis using log(Salary) as the response variable.
+
+```{r}
+ggplot(mydata_clean, aes(x = MP, y = log(Salary))) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = TRUE, color = "navy") +
+  labs(x = "Minutes played Per game (MP)", y = "Log(Salary) ($)", 
+       title = "Figure 2",
+       caption = "The relationship between minutes played per game and log salary")
+```
+
+The log transformation appears to substantially improve the linearity of the relationship between Minutes Played per game and Salary. As shown in Figure 2, when modeling log(Salary) against Minutes Played, the data points align more closely around the fitted regression line compared to the raw Salary model in Figure 1.
+
+In addition, the variance of the residuals appears more stable across different levels of Minutes Played. The relationship now shows a clearer linear trend, suggesting that a linear regression model with log(Salary) as the response variable is more appropriate than using raw Salary.
+
+Based on the scatterplot and the fitted regression line, players’ salary increases as Minutes Played per game increases. There is a clear positive relationship between playing time and compensation: players who average more minutes per game tend to earn higher salaries.
+
+When examining the raw Salary model in Figure 1, the relationship appears upward sloping but exhibits increasing variability at higher levels of Minutes Played, indicating potential nonlinearity. After applying a logarithmic transformation to Salary, the relationship becomes more linear and the variance appears more stable. The fitted regression line in the log(Salary) model confirms a strong positive association between Minutes Played and salary.
+
+Interpreting the log-scale model, this suggests that each additional minute played per game is associated with a proportional (percentage) increase in salary rather than a constant dollar increase.
+
+# Section 3: Prediction
+
+In this section, we describe our predictive methodology, the model employed, and the validation techniques used to evaluate its performance. We utilized K-Nearest Neighbors (KNN) algorithm to build our model. KNN is a distance-based, non-parametric predictive algorithm.  
+
+## Section 3.1: KNN Procedures
+
+To predict the salary of a given player based on their characteristics, KNN proceeds as follows:
+
+First, the algorithm computes distance measures to determine how similar the player in the test data is compared to all players in the training dataset. This is done using Gower's distance. 
+
+Then, for a chosen value of K, the 'K' number of  players in the training data whose feature profiles are the closest to the player in the test dataset. 
+
+Finally, the predicted salary is computed as the average salary of these K neighboring players. 
+
+In other words, the model assumes that players with similar performance characteristics tend to earn similar salaries, and it uses the observed salaries in the training data to generate the prediction.
+
+## Section 3.2: Motivation
+
+The primary motivation for choosing KNN is its flexibility. Salary structure in the NBA is unlikely to follow a strictly linear relationship with performance metrics. In other words, equal changes in performance statistics may not translate into equivalent changes in salary across different levels of the feature space.
+
+Moreover, salary structures may differ substantially between role players and star players. By making predictions based on the player's nearest neighbors, KNN effectively allows predictions to be made within local groups and tiers of players. This local averaging approach is intuitive and aligns well with how player valuation may operate in practice.
+
+To optimize the performance of our KNN model, we must carefully determine the value of K. To determine the most appropriate value for K, we implemented a cross-validation technique: Leave-One-Out Cross-Validation (LOOCV).
+
+We chose this re-sampling method since our dataset’s size is highly constrained, containing information for only (467) players. With such a limited sample size, dividing into both train and validation data would reduce the data available for training, making it an impractical approach.
+
+## Section 3.3: LOOCV
+
+In LOOCV, the model iteratively selects a single player as the validation set while training on the remaining observations. In this report, the training data for our KNN using LOOCV will always be (466) rows. This process is repeated for every player in the dataset. After we finish all the iterations, we retrieve our predictions on each row of data. To measure prediction accuracy, we calculate Root Mean Squared Error (RMSE) by averaging the prediction errors across all iterations.
+
+To tune our K, we applied this LOOCV process for every potential K value ranging from 2 to 50, a conventional range of choice for K . We then select the K that minimizes the overall RMSE. Based on Figure 3 below, we mapped the calculated RMSE results against the choices of K and come to a conclusion that we should choose K = 11.
+
+```{r}
+compute_RMSE <- function(actual, prediction) {
+  error <- actual - prediction
+  rmse <- sqrt(mean(error^2))
+  return(rmse)
+}
+
+##LOOCV
+Kchoice<-data.frame("Choice of K"=2:50,"RMSE"=rep(NA,49))
+n<-nrow(mydata_clean)
+for(k in 2:50){
+  yhat<-rep(NA,n)
+  for(i in 1:n){
+    train<-mydata_clean[-i,]
+    validation<-mydata_clean[i,]
+    yhat[i]<-knnregTrain(train[,-1],
+                         validation[,-1],
+                         log(train[,1]),
+                         k=k)
+  }
+  Kchoice[k-1,"RMSE"]<-compute_RMSE(log(mydata_clean$Salary),yhat)
+}
+
+smallestRMSE <- c(2:50)[which.min(Kchoice$RMSE)] 
+ggplot( data.frame(Kchoice), aes( x = Choice.of.K, y = RMSE)) + 
+  
+geom_point() + 
+  
+geom_vline( xintercept = smallestRMSE, col = "navy" , lty = 2 ) + 
+  
+labs(caption = paste("Validation RMSE values for Different Tuning Parameters. Smallest RMSE at K = ", smallestRMSE), y = "Validation RMSE", x = "Tuning Parameter", title = "Figure 3")
+
+yhat<-rep(NA,n)
+  for(i in 1:n){
+    train<-mydata_clean[-i,]
+    validation<-mydata_clean[i,]
+    yhat[i]<-knnregTrain(train[,-1],
+                         validation[,-1],
+                         log(train[,1]),
+                         k=11)
+  }
+
+plot_data <- data.frame(
+  Actual = mydata_clean$Salary,
+  Predicted = yhat
+)
+
+ggplot(plot_data, aes(x = Actual, y = exp(Predicted))) +
+  geom_point() +
+  labs(x = "Actual Salary ($)", y = "Predicted Salary ($)", title = "Figure 4", caption = "The Actual Player Salaries v.s. The Predicted Salaries in US Dollars")+
+  geom_smooth(method = "lm", se = TRUE, color = "navy") 
+```
+
+Figure 4 above is a graph that plots the actual player salaries against the predicted salaries generated by our KNN prediction algorithm. Using the log transformation in the prediction helps reduce the skewness present in the salary data and allows for a more meaningful comparison between the prediction and actual data, we then exponentialized the prediction results to map the actual salary data. Overall, the model demonstrates moderate predictive performance, with relatively high variance for players with higher wages.
+
+However, one notable pattern is the presence of frequent underestimations, where the predicted salary is lower than the actual salary. This suggests that the model may be biased toward predicting larger values, particularly for certain players. Improving the model could involve further tuning the value of K, incorporating additional relevant features, or experimenting with alternative modeling approaches to reduce these systematic prediction errors.
+
+```{r}
+## 5 fold CV
+Kchoice2<-data.frame("Choice of K"=2:50,"RMSE"=rep(NA,49))
+folds<-rep(1:5,n/5+1)
+fold<-sample(folds,n,replace=FALSE)
+for(k in 2:50){
+  yhat<-rep(NA,n)
+  for(i in 1:5){
+    infold<-which(fold==i)
+    train<-mydata_clean[-infold,]
+    validation<-mydata_clean[infold,]
+    yhat[infold]<-knnregTrain(train[,-1],
+                         validation[,-1],
+                         train[,1],
+                         k=k)
+  }
+  Kchoice2[k-1,"RMSE"]<-compute_RMSE(mydata_clean$Salary,yhat)
+}
+
+```
 
 \newpage
-# Appendix A: The Data
+
+# Appendix A: The Data {#appendix-a}
 
 ```{r}
 knitr::kable(mydata_clean, title = "The Original Data")
 ```
+
+
